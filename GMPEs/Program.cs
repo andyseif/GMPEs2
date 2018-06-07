@@ -30,6 +30,8 @@ namespace Hazard
             HazardCalculation.ThisScenario.Ztop = 1.0;
             HazardCalculation.ThisScenario.Z1p0 = 1.5;
 
+            // TEST COMMENT
+
             string GMPEName = "ASK2014_AttenRel"; // "Campbell_2003_AttenRel";  GMPEName="ToroEtAl_1997_AttenRel"; //GMPEName = "AB2006_140_AttenRel";
             // double[] periods = { 0.01, 0.02, 0.03, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 6.0, 7.5, 10.0 };
             
