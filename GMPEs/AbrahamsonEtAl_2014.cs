@@ -66,7 +66,6 @@ namespace GMPEs
 
         public void setParamDefaults()
         {
-            period = HazardCalculation.ThisScenario.saPeriodParam;
             mag = HazardCalculation.ThisScenario.Magnitude;
             rRup = HazardCalculation.ThisScenario.RuptureDistance;
             rJB = HazardCalculation.ThisScenario.JoynerBooreDistance;
@@ -95,7 +94,17 @@ namespace GMPEs
 
         public double getMean()
         {
+            // range checks. Make sure we want to do this (for computational reasons)
+            // check period range
+
+            // check distance range
+
+            // check Vs30 range
+
+            // check M range?
+
             // Check if key (period) is directly available from GMPE
+            period = HazardCalculation.ThisScenario.saPeriodParam;
             if (indexFromPerHashMap.ContainsKey(period))
             {
                 // Get median directly from GMPE
@@ -222,12 +231,7 @@ namespace GMPEs
 
             double f4 = getf4();
 
-            // Depth to Rupture Top Model -- Equation 16
-            double f6 = a15[iper];
-            if (zTop < 20.0)
-            {
-                f6 *= zTop / 20.0;
-            }
+            double f6 = getf6();
 
             // Style-of-Faulting Model -- Equations 5 & 6
             // Note: REVERSE doesn not need to be implemented as f7 always resolves
@@ -284,12 +288,7 @@ namespace GMPEs
 
             double f4 = getf4();
 
-            // Depth to Rupture Top Model -- Equation 16
-            double f6 = a15[iper];
-            if (zTop < 20.0)
-            {
-                f6 *= zTop / 20.0;
-            }
+            double f6 = getf6();
 
             // Style-of-Faulting Model -- Equations 5 & 6
             // Note: REVERSE doesn not need to be implemented as f7 always resolves
@@ -480,6 +479,18 @@ namespace GMPEs
 
             return f4;
         }
+
+        private double getf6()
+        {
+            // Depth to Rupture Top Model -- Equation 16
+            double f6 = a15[iper];
+            if (zTop < 20.0)
+            {
+                f6 *= zTop / 20.0;
+            }
+            return f6;
+        }
+
     }
 
 }
