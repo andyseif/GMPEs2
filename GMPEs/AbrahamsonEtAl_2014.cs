@@ -218,61 +218,9 @@ namespace GMPEs
             double MaxMwSq = (8.5 - mag) * (8.5 - mag);
             double MwM1 = mag - M1[iper];
 
-            double f1 = a1[iper] + a17[iper] * rRup;
-            if (mag > M1[iper])
-            {
-                f1 += A5 * MwM1 + a8[iper] * MaxMwSq + (a2[iper] + A3 * MwM1) * Math.Log(R);
-            }
-            else if (mag >= M2)
-            {
-                f1 += A4 * MwM1 + a8[iper] * MaxMwSq + (a2[iper] + A3 * MwM1) * Math.Log(R);
-            }
-            else
-            {
-                double M2M1 = M2 - M1[iper];
-                double MaxM2Sq = (8.5 - M2) * (8.5 - M2);
-                double MwM2 = mag - M2;
-                // a7 == 0; removed a7 * MwM2 * MwM2 below
-                f1 += A4 * M2M1 + a8[iper] * MaxM2Sq + a6[iper] * MwM2 + (a2[iper] + A3 * M2M1) * Math.Log(R);
-            }
+            double f1 = getf1(MwM1, MaxMwSq, R);
 
-            // Hanging Wall Model
-            double f4 = 0.0;
-            // short-circuit: f4 is 0 if rJB >= 30, rX < 0, mag <= 5.5, zTop > 10
-            // these switches have been removed below
-            if (rJB < 30.0 && rX >= 0.0 && mag > 5.5 && zTop <= 10.0)
-            {
-
-                // ... dip taper -- Equation 11
-                double T1 = (dip > 30.0) ? (90.0 - dip) / 45.0 : 1.33333333; // 60/45
-
-                // ... mag taper -- Equation 12
-                double dM = mag - 6.5;
-                double T2 = (mag >= 6.5) ? 1 + A2_HW * dM : 1 + A2_HW * dM - (1 - A2_HW) * dM * dM;
-
-                // ... rX taper -- Equation 13
-                double T3 = 0.0;
-                double r1 = width * Math.Cos(dip * Math.PI / 180);
-                double r2 = 3.0 * r1;
-                if (rX <= r1)
-                {
-                    double rXr1 = rX / r1;
-                    T3 = H1 + H2 * rXr1 + H3 * rXr1 * rXr1;
-                }
-                else if (rX <= r2)
-                {
-                    T3 = 1 - (rX - r1) / (r2 - r1);
-                }
-
-                // ... zTop taper -- Equation 14
-                double T4 = 1 - (zTop * zTop) / 100.0;
-
-                // ... rX, rY0 taper -- Equation 15b
-                double T5 = (rJB == 0.0) ? 1.0 : 1.0 - rJB / 30.0;
-
-                // total -- Equation 10
-                f4 = a13[iper] * T1 * T2 * T3 * T4 * T5;
-            }
+            double f4 = getf4();
 
             // Depth to Rupture Top Model -- Equation 16
             double f6 = a15[iper];
@@ -332,61 +280,9 @@ namespace GMPEs
             double MaxMwSq = (8.5 - mag) * (8.5 - mag);
             double MwM1 = mag - M1[iper];
 
-            double f1 = a1[iper] + a17[iper] * rRup;
-            if (mag > M1[iper])
-            {
-                f1 += A5 * MwM1 + a8[iper] * MaxMwSq + (a2[iper] + A3 * MwM1) * Math.Log(R);
-            }
-            else if (mag >= M2)
-            {
-                f1 += A4 * MwM1 + a8[iper] * MaxMwSq + (a2[iper] + A3 * MwM1) * Math.Log(R);
-            }
-            else
-            {
-                double M2M1 = M2 - M1[iper];
-                double MaxM2Sq = (8.5 - M2) * (8.5 - M2);
-                double MwM2 = mag - M2;
-                // a7 == 0; removed a7 * MwM2 * MwM2 below
-                f1 += A4 * M2M1 + a8[iper] * MaxM2Sq + a6[iper] * MwM2 + (a2[iper] + A3 * M2M1) * Math.Log(R);
-            }
+            double f1 = getf1(MwM1, MaxMwSq, R);
 
-            // Hanging Wall Model
-            double f4 = 0.0;
-            // short-circuit: f4 is 0 if rJB >= 30, rX < 0, mag <= 5.5, zTop > 10
-            // these switches have been removed below
-            if (rJB < 30.0 && rX >= 0.0 && mag > 5.5 && zTop <= 10.0)
-            {
-
-                // ... dip taper -- Equation 11
-                double T1 = (dip > 30.0) ? (90.0 - dip) / 45.0 : 1.33333333; // 60/45
-
-                // ... mag taper -- Equation 12
-                double dM = mag - 6.5;
-                double T2 = (mag >= 6.5) ? 1 + A2_HW * dM : 1 + A2_HW * dM - (1 - A2_HW) * dM * dM;
-
-                // ... rX taper -- Equation 13
-                double T3 = 0.0;
-                double r1 = width * Math.Cos(dip * Math.PI / 180);
-                double r2 = 3.0 * r1;
-                if (rX <= r1)
-                {
-                    double rXr1 = rX / r1;
-                    T3 = H1 + H2 * rXr1 + H3 * rXr1 * rXr1;
-                }
-                else if (rX <= r2)
-                {
-                    T3 = 1 - (rX - r1) / (r2 - r1);
-                }
-
-                // ... zTop taper -- Equation 14
-                double T4 = 1 - (zTop * zTop) / 100.0;
-
-                // ... rX, rY0 taper -- Equation 15b
-                double T5 = (rJB == 0.0) ? 1.0 : 1.0 - rJB / 30.0;
-
-                // total -- Equation 10
-                f4 = a13[iper] * T1 * T2 * T3 * T4 * T5;
-            }
+            double f4 = getf4();
 
             // Depth to Rupture Top Model -- Equation 16
             double f6 = a15[iper];
@@ -521,40 +417,69 @@ namespace GMPEs
             }
         }
 
-        //private double InterpFromVector(double[] xVector, double[] yVector, double xInterp)
-        //{
-        //    // if xInterp outside of xVector range, return first or last value of yVector
-        //    if ( xInterp <= xVector.First() ) 
-        //    {
-        //        return yVector.First();
-        //    }
-        //    else if ( xInterp >= xVector.Last() )
-        //    {
-        //        return yVector.Last();
-        //    }
+        private double getf1(double MwM1, double MaxMwSq, double R)
+        {
+            double f1 = a1[iper] + a17[iper] * rRup;
+            if (mag > M1[iper])
+            {
+                f1 += A5 * MwM1 + a8[iper] * MaxMwSq + (a2[iper] + A3 * MwM1) * Math.Log(R);
+            }
+            else if (mag >= M2)
+            {
+                f1 += A4 * MwM1 + a8[iper] * MaxMwSq + (a2[iper] + A3 * MwM1) * Math.Log(R);
+            }
+            else
+            {
+                double M2M1 = M2 - M1[iper];
+                double MaxM2Sq = (8.5 - M2) * (8.5 - M2);
+                double MwM2 = mag - M2;
+                f1 += A4 * M2M1 + a8[iper] * MaxM2Sq + a6[iper] * MwM2 + (a2[iper] + A3 * M2M1) * Math.Log(R);
+            }
+            return f1;
+        }
 
-        //    // otherwise, linearly interpolate
-        //    double x1, x2, y1, y2;
-        //    int ind = 0;
+        private double getf4()
+        {
+            // Hanging Wall Model
+            double f4 = 0.0;
+            // short-circuit: f4 is 0 if rJB >= 30, rX < 0, mag <= 5.5, zTop > 10
+            // these switches have been removed below
+            if (rJB < 30.0 && rX >= 0.0 && mag > 5.5 && zTop <= 10.0)
+            {
 
-        //    // stop at first index of xVector greater than xInterp
-        //    while ((xVector[ind] < xInterp) && (ind < xVector.Length))
-        //    {
-        //        ind++;
-        //    }
-        //    if (ind == xVector.Length)
-        //    {
-        //        return Double.NaN;
-        //    }
-        //    x1 = xVector[ind - 1];
-        //    y1 = yVector[ind - 1];
-        //    x2 = xVector[ind];
-        //    y2 = yVector[ind];
+                // ... dip taper -- Equation 11
+                double T1 = (dip > 30.0) ? (90.0 - dip) / 45.0 : 1.33333333; // 60/45
 
-        //    return y1 + (xInterp - x1) * (y2 - y1) / (x2 - x1);     
-            
-        //}
+                // ... mag taper -- Equation 12
+                double dM = mag - 6.5;
+                double T2 = (mag >= 6.5) ? 1 + A2_HW * dM : 1 + A2_HW * dM - (1 - A2_HW) * dM * dM;
 
+                // ... rX taper -- Equation 13
+                double T3 = 0.0;
+                double r1 = width * Math.Cos(dip * Math.PI / 180);
+                double r2 = 3.0 * r1;
+                if (rX <= r1)
+                {
+                    double rXr1 = rX / r1;
+                    T3 = H1 + H2 * rXr1 + H3 * rXr1 * rXr1;
+                }
+                else if (rX <= r2)
+                {
+                    T3 = 1 - (rX - r1) / (r2 - r1);
+                }
+
+                // ... zTop taper -- Equation 14
+                double T4 = 1 - (zTop * zTop) / 100.0;
+
+                // ... rX, rY0 taper -- Equation 15b
+                double T5 = (rJB == 0.0) ? 1.0 : 1.0 - rJB / 30.0;
+
+                // total -- Equation 10
+                f4 = a13[iper] * T1 * T2 * T3 * T4 * T5;
+            }
+
+            return f4;
+        }
     }
 
 }
