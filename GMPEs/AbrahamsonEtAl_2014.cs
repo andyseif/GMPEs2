@@ -81,7 +81,7 @@ namespace GMPEs
             isInferred = HazardCalculation.ThisScenario.IsInferred;
         }
 
-        // small change for test commit
+
         public ASK2014_AttenRel()
         {
             // populate dictionary of period indices
