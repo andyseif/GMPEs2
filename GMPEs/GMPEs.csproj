@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="AB2006_14.cs" />
     <Compile Include="AbrahamsonEtAl_2014.cs" />
+    <Compile Include="BooreEtAl_2014.cs" />
     <Compile Include="HazardCalculation.cs" />
     <Compile Include="TEA1997.cs" />
     <Compile Include="C03.cs" />
