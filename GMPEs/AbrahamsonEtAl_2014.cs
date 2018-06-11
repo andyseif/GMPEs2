@@ -12,7 +12,7 @@ namespace GMPEs
     class ASK2014_AttenRel
     {
         public readonly string SHORT_NAME = "ASK2014";
-        
+
         // coefficients and constants:
         private static double A3 = 0.275;
         private static double A4 = -0.1;
@@ -21,7 +21,7 @@ namespace GMPEs
         private static double N = 1.5;
         private static double C4 = 4.5;
         private static double A = Math.Pow(610, 4);
-        private static double B = Math.Pow(1360, 4) + A; 
+        private static double B = Math.Pow(1360, 4) + A;
         private static double VS_RK = 1180.0;
         private static double A2_HW = 0.2;
         private static double H1 = 0.25;
@@ -66,7 +66,6 @@ namespace GMPEs
 
         public void setParamDefaults()
         {
-            period = HazardCalculation.ThisScenario.saPeriodParam;
             mag = HazardCalculation.ThisScenario.Magnitude;
             rRup = HazardCalculation.ThisScenario.RuptureDistance;
             rJB = HazardCalculation.ThisScenario.JoynerBooreDistance;
@@ -95,7 +94,17 @@ namespace GMPEs
 
         public double getMean()
         {
+            // range checks. Make sure we want to do this (for computational reasons)
+            // check period range
+
+            // check distance range
+
+            // check Vs30 range
+
+            // check M range?
+
             // Check if key (period) is directly available from GMPE
+            period = HazardCalculation.ThisScenario.saPeriodParam;
             if (indexFromPerHashMap.ContainsKey(period))
             {
                 // Get median directly from GMPE
@@ -124,13 +133,14 @@ namespace GMPEs
                 else
                 {
                     int ind = 0;
-                    while ((perList[ind] < period) && (ind < perList.Count())) {
+                    while ((perList[ind] < period) && (ind < perList.Count()))
+                    {
                         ind++;
                     }
 
                     // create log period and log mean vectors for interpolation
                     double[] logPerVect = { Math.Log(perList[ind - 1]), Math.Log(perList[ind]) };
-                    double[] meanVect = {0, 0 };
+                    double[] meanVect = { 0, 0 };
                     setCoeffIndex(perList[ind - 1]);
                     meanVect[0] = getMeanHere();
                     setCoeffIndex(perList[ind]);
@@ -138,15 +148,16 @@ namespace GMPEs
 
                     //interpolate in log-log space
                     return HelperMethods.InterpFromVector(logPerVect, meanVect, Math.Log(period));
-                    }
+                }
 
             }
-            
+
         }
 
         public double getStdDev()
         {
             // Check if key (period) is directly available from GMPE
+            period = HazardCalculation.ThisScenario.saPeriodParam;
             if (indexFromPerHashMap.ContainsKey(period))
             {
                 // Get median directly from GMPE
@@ -222,12 +233,7 @@ namespace GMPEs
 
             double f4 = getf4();
 
-            // Depth to Rupture Top Model -- Equation 16
-            double f6 = a15[iper];
-            if (zTop < 20.0)
-            {
-                f6 *= zTop / 20.0;
-            }
+            double f6 = getf6();
 
             // Style-of-Faulting Model -- Equations 5 & 6
             // Note: REVERSE doesn not need to be implemented as f7 always resolves
@@ -267,7 +273,7 @@ namespace GMPEs
             return f1 + f78 + f5 + f4 + f6 + f10;
         }
 
-        private double getStdDevHere() 
+        private double getStdDevHere()
         {
 
             // Magnitude dependent taper -- Equation 4
@@ -284,12 +290,7 @@ namespace GMPEs
 
             double f4 = getf4();
 
-            // Depth to Rupture Top Model -- Equation 16
-            double f6 = a15[iper];
-            if (zTop < 20.0)
-            {
-                f6 *= zTop / 20.0;
-            }
+            double f6 = getf6();
 
             // Style-of-Faulting Model -- Equations 5 & 6
             // Note: REVERSE doesn not need to be implemented as f7 always resolves
@@ -317,7 +318,7 @@ namespace GMPEs
 
             // Intra-event term -- Equation 24
             double phiAsq;
-            if (isInferred) 
+            if (isInferred)
             {
                 phiAsq = getPhiA(s1e[iper], s2e[iper]); //mag, 
             }
@@ -328,14 +329,14 @@ namespace GMPEs
             phiAsq *= phiAsq;
 
             // Inter-event term -- Equation 25
-            double tauB = getTauA(); 
+            double tauB = getTauA();
 
             // Intra-event term with site amp variability removed -- Equation 27
             double phiBsq = phiAsq - PHI_AMP_SQ;
 
             // Parital deriv. of ln(soil amp) w.r.t. ln(SA1180) -- Equation 30
             // saRock subject to same vs30 < Vlin test as in mean model
-            double dAmp_p1 = get_dAmp(saRock) + 1.0; 
+            double dAmp_p1 = get_dAmp(saRock) + 1.0;
 
             // phi squared, with non-linear effects -- Equation 28
             double phiSq = phiBsq * dAmp_p1 * dAmp_p1 + PHI_AMP_SQ;
@@ -370,7 +371,7 @@ namespace GMPEs
         private static double[] VS_BINS = { 150d, 250d, 400d, 700d, 1000d };
 
         // Soil depth model adapted from CY13 form -- Equation 17
-        private double calcSoilTerm() 
+        private double calcSoilTerm()
         {
             // short circuit; default z1 will be the same as z1ref
             if (Double.IsNaN(z1p0))
@@ -392,19 +393,19 @@ namespace GMPEs
         }
 
         // -- Equation 24
-        private double getPhiA(double s1p, double s2p) 
+        private double getPhiA(double s1p, double s2p)
         {
             return mag < 4.0 ? s1p : mag > 6.0 ? s2p : s1p + ((s2p - s1p) / 2.0) * (mag - 4.0);
         }
 
         // -- Equation 25
-        private double getTauA() 
+        private double getTauA()
         {
             return mag < 5.0 ? s3[iper] : mag > 7.0 ? s4[iper] : s3[iper] + ((s4[iper] - s3[iper]) / 2.0) * (mag - 5.0);
         }
 
         // -- Equation 30
-        private double get_dAmp(double saRockp) 
+        private double get_dAmp(double saRockp)
         {
             if (vs30 >= Vlin[iper])
             {
@@ -412,7 +413,7 @@ namespace GMPEs
             }
             else
             {
-                return (-b[iper] * saRockp) / (saRockp + c[iper]) + 
+                return (-b[iper] * saRockp) / (saRockp + c[iper]) +
                     (b[iper] * saRockp) / (saRockp + c[iper] * Math.Pow(vs30 / Vlin[iper], N));
             }
         }
@@ -480,6 +481,18 @@ namespace GMPEs
 
             return f4;
         }
+
+        private double getf6()
+        {
+            // Depth to Rupture Top Model -- Equation 16
+            double f6 = a15[iper];
+            if (zTop < 20.0)
+            {
+                f6 *= zTop / 20.0;
+            }
+            return f6;
+        }
+
     }
 
 }
