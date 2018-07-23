@@ -29,7 +29,7 @@ namespace GMPEs
         private static double H3 = -0.75;
         private static double PHI_AMP_SQ = 0.16;
 
-        private static double[] pd = { 0.01, 0.02, 0.03, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.75, 1, 1.5, 2, 3, 4, 5, 6, 7.5, 10.0 };
+        private static double[] pd = { 0.01, 0.02, 0.03, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.75, 1, 1.5, 2, 3, 4, 5, 6, 7.5, 10.0};
 
         private static double[] a1 = { 0.587, 0.598, 0.602, 0.707, 0.973, 1.169, 1.442, 1.637, 1.701, 1.712, 1.662, 1.571, 1.299, 1.043, 0.665, 0.329, -0.06, -0.299, -0.562, -0.875, -1.303, -1.928 };
         private static double[] a2 = { -0.79, -0.79, -0.79, -0.79, -0.79, -0.79, -0.79, -0.79, -0.79, -0.79, -0.79, -0.79, -0.79, -0.79, -0.79, -0.79, -0.79, -0.79, -0.765, -0.711, -0.634, -0.529 };
@@ -74,7 +74,7 @@ namespace GMPEs
             style = HazardCalculation.ThisScenario.FaultStyle;
             dip = HazardCalculation.ThisScenario.Dip;
             width = HazardCalculation.ThisScenario.Width;
-            zTop = HazardCalculation.ThisScenario.Ztop;
+            zTop = HazardCalculation.ThisScenario.Ztor;
             z1p0 = HazardCalculation.ThisScenario.Z1p0;
             vs30 = HazardCalculation.ThisScenario.VsThirty;
             isInferred = HazardCalculation.ThisScenario.IsInferred;
@@ -92,7 +92,7 @@ namespace GMPEs
 
         }
 
-        public double getMean()
+        public GroundMotion GetGroundMotion(GroundMotion newGm)
         {
             // range checks. Make sure we want to do this (for computational reasons)
             // check period range
@@ -108,8 +108,7 @@ namespace GMPEs
             if (indexFromPerHashMap.ContainsKey(period))
             {
                 // Get median directly from GMPE
-                setCoeffIndex(period);
-                return getMeanHere();
+                newGm = getGmHere(newGm);
             }
             // If key (period) is not directly available from GMPE, interpolate
             // using median of next highest and lowest periods that are directly available
@@ -123,12 +122,12 @@ namespace GMPEs
                 if (period < perList.First())
                 {
                     // desired period is not in range of GMPE
-                    return 0;
+                    return newGm;
                 }
                 else if (period > perList.Last())
                 {
                     // desired period is not in range of GMPE
-                    return 0;
+                    return newGm;
                 }
                 else
                 {
@@ -140,82 +139,44 @@ namespace GMPEs
 
                     // create log period and log mean vectors for interpolation
                     double[] logPerVect = { Math.Log(perList[ind - 1]), Math.Log(perList[ind]) };
-                    double[] meanVect = { 0, 0 };
-                    setCoeffIndex(perList[ind - 1]);
-                    meanVect[0] = getMeanHere();
-                    setCoeffIndex(perList[ind]);
-                    meanVect[1] = getMeanHere();
-
-                    //interpolate in log-log space
-                    return HelperMethods.InterpFromVector(logPerVect, meanVect, Math.Log(period));
-                }
-
-            }
-
-        }
-
-        public double getStdDev()
-        {
-            // Check if key (period) is directly available from GMPE
-            period = HazardCalculation.ThisScenario.saPeriodParam;
-            if (indexFromPerHashMap.ContainsKey(period))
-            {
-                // Get median directly from GMPE
-                setCoeffIndex(period);
-                return getStdDevHere();
-            }
-            // If key (period) is not directly available from GMPE, interpolate
-            // using median of next highest and lowest periods that are directly available
-            else
-            {
-                // created ordered list of keys
-                var perList = indexFromPerHashMap.Keys.ToList();
-                perList.Sort();
-
-                // find two indicies for keys (periods) just above and below saPeriodParam
-                if (period < perList.First())
-                {
-                    // desired period is not in range of GMPE
-                    return 0;
-                }
-                else if (period > perList.Last())
-                {
-                    // desired period is not in range of GMPE
-                    return 0;
-                }
-                else
-                {
-                    int ind = 0;
-                    while ((perList[ind] < period) && (ind < perList.Count()))
-                    {
-                        ind++;
-                    }
-
-                    // create log period and log mean vectors for interpolation
-                    double[] logPerVect = { Math.Log(perList[ind - 1]), Math.Log(perList[ind]) };
+                    double[] muVect = { 0, 0 };
                     double[] sigVect = { 0, 0 };
-                    setCoeffIndex(perList[ind - 1]);
-                    sigVect[0] = getStdDevHere();
-                    setCoeffIndex(perList[ind]);
-                    sigVect[1] = getStdDevHere();
+                    GroundMotion gm = new GroundMotion();
+
+                    period = perList[ind - 1];
+                    gm = getGmHere(gm);
+                    muVect[0] = gm.GetLogMean();
+                    sigVect[0] = gm.GetLogStd();
+
+                    // zero-out gm
+                    newGm.SetLogMean(0.0);
+                    newGm.SetLogStd(0.0);
+
+                    period = perList[ind];
+                    gm = getGmHere(gm);
+                    muVect[1] = gm.GetLogMean();
+                    sigVect[1] = gm.GetLogStd();
 
                     //interpolate in log-log space
-                    return HelperMethods.InterpFromVector(logPerVect, sigVect, Math.Log(period));
+                    double mu = HelperMethods.InterpFromVector(logPerVect, muVect, Math.Log(period));
+                    double sig = HelperMethods.InterpFromVector(logPerVect, sigVect, Math.Log(period));
+
+                    newGm.SetLogMean(mu);
+                    newGm.SetLogStd(sig);
                 }
 
             }
 
+            return newGm;
+
         }
 
-        // Get index 
-        private void setCoeffIndex(double perKey)
-        {
-            iper = indexFromPerHashMap[perKey];
-        }
-
-        private double getMeanHere()
+        private GroundMotion getGmHere(GroundMotion gm)
         {
             // ****** Mean ground motion and standard deviation model ******
+
+            // get index coefficients for current period
+            setCoeffIndex(period);
 
             // Base Model (magnitude and distance dependence for strike-slip eq)
 
@@ -270,51 +231,7 @@ namespace GMPEs
             }
 
             // total model (no aftershock f11) -- Equation 1
-            return f1 + f78 + f5 + f4 + f6 + f10;
-        }
-
-        private double getStdDevHere()
-        {
-
-            // Magnitude dependent taper -- Equation 4
-            double c4mag = (mag > 5) ? C4 : (mag > 4) ? C4 - (C4 - 1.0) * (5.0 - mag) : 1.0;
-
-            // -- Equation 3
-            double R = Math.Sqrt(rRup * rRup + c4mag * c4mag);
-
-            // -- Equation 2
-            double MaxMwSq = (8.5 - mag) * (8.5 - mag);
-            double MwM1 = mag - M1[iper];
-
-            double f1 = getf1(MwM1, MaxMwSq, R);
-
-            double f4 = getf4();
-
-            double f6 = getf6();
-
-            // Style-of-Faulting Model -- Equations 5 & 6
-            // Note: REVERSE doesn not need to be implemented as f7 always resolves
-            // to 0 as a11==0; we skip f7 here
-            double f78 = (style == FaultStyle.NORMAL) ? (mag > 5.0) ? a12[iper] : (mag >= 4.0) ? a12[iper] * (mag - 4.0) : 0.0
-                : 0.0;
-
-            // ****** Aleatory uncertainty model ******
-            double saRock = 0.0;
-            double c_Vlin = Vlin[iper];
-            double c_b = b[iper];
-            double c_c = c[iper];
-
-            if (vs30 < c_Vlin)
-            {
-                // soil term (f10) for Sa1180 is zero per R. Kamai's code where Z1 < 0 for Sa1180 loop
-                double v1 = getV1(iper); // -- Equation 9
-                double vs30s_rk = (VS_RK < v1) ? VS_RK : v1;
-                // use this f5 form for Sa1180 Vlin is always < 1180
-                double f5_rk = (a10[iper] + c_b * N) * Math.Log(vs30s_rk / c_Vlin);
-
-
-                saRock = Math.Exp(f1 + f78 + f5_rk + f4 + f6);
-            }
+            double mu = f1 + f78 + f5 + f4 + f6 + f10;
 
             // Intra-event term -- Equation 24
             double phiAsq;
@@ -345,7 +262,17 @@ namespace GMPEs
             double tau = tauB * dAmp_p1;
 
             // total std dev
-            return Math.Sqrt(phiSq + tau * tau);
+            double sig = Math.Sqrt(phiSq + tau * tau);
+
+            gm.SetLogMean(mu);
+            gm.SetLogStd(sig);
+            return gm;
+        }
+
+        // Get index 
+        private void setCoeffIndex(double perKey)
+        {
+            iper = indexFromPerHashMap[perKey];
         }
 
         // -- Equation 9

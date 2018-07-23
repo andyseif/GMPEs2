@@ -83,15 +83,18 @@ namespace GMPEs
 
         }
 
-        public double getMean()
+        public GroundMotion GetGroundMotion(GroundMotion newGm)
         {
+            double mu, sig;
+
             // Check if key (period) is directly available from GMPE
             period = HazardCalculation.ThisScenario.saPeriodParam;
             if (indexFromPerHashMap.ContainsKey(period))
             {
                 // Get median directly from GMPE
                 //setCoeffIndex(period);
-                return getMeanHere();
+                mu = getMeanHere();
+                sig = getStdDevHere();
             }
             // If key (period) is not directly available from GMPE, interpolate
             // using median of next highest and lowest periods that are directly available
@@ -105,12 +108,12 @@ namespace GMPEs
                 if (period < perList.First())
                 {
                     // desired period is not in range of GMPE
-                    return 0;
+                    return newGm;
                 }
                 else if (period > perList.Last())
                 {
                     // desired period is not in range of GMPE
-                    return 0;
+                    return newGm;
                 }
                 else
                 {
@@ -122,79 +125,29 @@ namespace GMPEs
 
                     // create log period and log mean vectors for interpolation
                     double[] logPerVect = { Math.Log(perList[ind - 1]), Math.Log(perList[ind]) };
-                    double[] meanVect = { 0, 0 };
-
-                    period = perList[ind - 1];
-                    meanVect[0] = getMeanHere();
-
-                    period = perList[ind];
-                    meanVect[1] = getMeanHere();
-
-                    period = HazardCalculation.ThisScenario.saPeriodParam;
-
-                    //interpolate in log-log space
-                    return HelperMethods.InterpFromVector(logPerVect, meanVect, Math.Log(period));
-                }
-
-            }
-
-        }
-
-        public double getStdDev()
-        {
-            // Check if key (period) is directly available from GMPE
-            period = HazardCalculation.ThisScenario.saPeriodParam;
-            if (indexFromPerHashMap.ContainsKey(period))
-            {
-                // Get median directly from GMPE
-                //setCoeffIndex(period);
-                return getStdDevHere();
-            }
-            // If key (period) is not directly available from GMPE, interpolate
-            // using median of next highest and lowest periods that are directly available
-            else
-            {
-                // created ordered list of keys
-                var perList = indexFromPerHashMap.Keys.ToList();
-                perList.Sort();
-
-                // find two indicies for keys (periods) just above and below saPeriodParam
-                if (period < perList.First())
-                {
-                    // desired period is not in range of GMPE
-                    return 0;
-                }
-                else if (period > perList.Last())
-                {
-                    // desired period is not in range of GMPE
-                    return 0;
-                }
-                else
-                {
-                    int ind = 0;
-                    while ((perList[ind] < period) && (ind < perList.Count()))
-                    {
-                        ind++;
-                    }
-
-                    // create log period and log mean vectors for interpolation
-                    double[] logPerVect = { Math.Log(perList[ind - 1]), Math.Log(perList[ind]) };
+                    double[] muVect = { 0, 0 };
                     double[] sigVect = { 0, 0 };
 
                     period = perList[ind - 1];
+                    muVect[0] = getMeanHere();
                     sigVect[0] = getStdDevHere();
 
                     period = perList[ind];
+                    muVect[1] = getMeanHere();
                     sigVect[1] = getStdDevHere();
 
                     period = HazardCalculation.ThisScenario.saPeriodParam;
 
                     //interpolate in log-log space
-                    return HelperMethods.InterpFromVector(logPerVect, sigVect, Math.Log(period));
+                    mu = HelperMethods.InterpFromVector(logPerVect, muVect, Math.Log(period));
+                    sig = HelperMethods.InterpFromVector(logPerVect, sigVect, Math.Log(period));
                 }
 
             }
+            newGm.SetLogMean(mu);
+            newGm.SetLogStd(sig);
 
+            return newGm;
         }
 
         // Get index 
