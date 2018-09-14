@@ -16,27 +16,27 @@ namespace Hazard
         {
 
           //  HazardCalculation.ThisScenario.saPeriodParam=1;  !!!! See below 
-            HazardCalculation.ThisScenario.Magnitude = 7.1;
+            HazardCalculation.ThisScenario.Magnitude = 6.3;
             HazardCalculation.ThisScenario.RuptureDistance = 25.6;
             HazardCalculation.ThisScenario.JoynerBooreDistance = 25.1;
             HazardCalculation.ThisScenario.RxDistance = 25.2;
-            HazardCalculation.ThisScenario.VsThirty = 320.0;
+            HazardCalculation.ThisScenario.VsThirty = 640.0;
             HazardCalculation.ThisScenario.IsInferred = false;
-            HazardCalculation.ThisScenario.SiteType = SiteType.HARD_ROCK;
+            HazardCalculation.ThisScenario.SiteType = SiteType.FIRM_ROCK;
             HazardCalculation.ThisScenario.MagnitudeType = MagnitudeType.MOMENT;
-            HazardCalculation.ThisScenario.FaultStyle = FaultStyle.NORMAL;
+            HazardCalculation.ThisScenario.FaultStyle = FaultStyle.STRIKE_SLIP;
             HazardCalculation.ThisScenario.Dip = 90;
             HazardCalculation.ThisScenario.Width = 20;
-            HazardCalculation.ThisScenario.Ztop = 1.0;
+            HazardCalculation.ThisScenario.Ztor = 1.0;
             HazardCalculation.ThisScenario.Z1p0 = 1.5;
+            HazardCalculation.ThisScenario.Z2p5 = 3.0;
+            HazardCalculation.ThisScenario.HypoDepth = 8.0;
 
-            // TEST COMMENT
+            string GMPEName = "ASK2014_AttenRel"; // "CY2014_AttenRel"; // "I2014_AttenRel"; // "CB2014_AttenRel"; // "BSSA2014_AttenRel"; // "ASK2014_AttenRel"; // "Campbell_2003_AttenRel";  GMPEName="ToroEtAl_1997_AttenRel"; //GMPEName = "AB2006_140_AttenRel";
+            double[] periods = { 0.01, 0.02, 0.03, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 7.5, 10.0 };
 
-            string GMPEName = "ASK2014_AttenRel"; // "Campbell_2003_AttenRel";  GMPEName="ToroEtAl_1997_AttenRel"; //GMPEName = "AB2006_140_AttenRel";
-            // double[] periods = { 0.01, 0.02, 0.03, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 6.0, 7.5, 10.0 };
-            
             // alternative set of periods that require interpolation
-            double[] periods = { 0.015, 0.025, 0.04, 0.0625, 0.0875, 0.125, 0.175, 0.225, 0.275, 0.35, 0.45, 0.625, 0.875, 1.25, 1.75, 2.5, 3.5, 4.5, 5.5, 6.75, 8.75 };
+            // double[] periods = { 0.015, 0.025, 0.04, 0.0625, 0.0875, 0.125, 0.175, 0.225, 0.275, 0.35, 0.45, 0.625, 0.875, 1.25, 1.75, 2.5, 3.5, 4.5, 5.5, 6.75, 8.75 };
 
             double[] MedianResults = new double[periods.Length];
             double[] SigmaResults = new double[periods.Length];
@@ -50,9 +50,12 @@ namespace Hazard
                 for (int i = 0; i < periods.Length; i++)
                 {
                     HazardCalculation.ThisScenario.saPeriodParam = periods[i];
-                    
-                    var Median = GMPE.getMean();
-                    var Sigma = GMPE.getStdDev();
+
+                    GroundMotion gm = new GroundMotion();
+                    gm = GMPE.GetGroundMotion(gm);
+
+                    double Median = Math.Exp(gm.GetLogMean());
+                    double Sigma = gm.GetLogStd();
 
                     MedianResults[i] = Median;
                     SigmaResults[i] = Sigma;

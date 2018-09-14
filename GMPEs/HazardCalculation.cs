@@ -32,10 +32,11 @@ namespace Hazard
             public double RyDistance { get; set; }
             public double Azimuth { get; set; }
             public double Ztor { get; set; }
+            public double HypoDepth { get; set; }
             public double Dip { get; set; }
             public double Width { get; set; }
-            public double Ztop { get; set; }
             public double Z1p0 { get; set; }
+            public double Z2p5 { get; set; }
             public double VsThirty { get; set; }
             public bool IsInferred { get; set; }
             public bool HangingWallFlag { get; set; }
